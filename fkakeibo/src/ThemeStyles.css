@@ -1,0 +1,318 @@
+/* テーマベースのスタイル */
+.app-container {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 100vh;
+  padding: 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+/* 各テーマのCSS変数 */
+.theme-blue {
+  --primary-color: #2563eb;
+  --primary-light: #60a5fa;
+  --primary-dark: #1d4ed8;
+  --secondary-color: #eff6ff;
+  --background-color: #f8fafc;
+  --surface-color: #ffffff;
+  --text-color: #0f172a;
+  --text-secondary: #64748b;
+  --border-color: #e2e8f0;
+  --shadow-color: rgba(37, 99, 235, 0.15);
+  --gradient: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);
+  --card-gradient: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.theme-green {
+  --primary-color: #10b981;
+  --primary-light: #34d399;
+  --primary-dark: #059669;
+  --secondary-color: #ecfdf5;
+  --background-color: #f0fdf4;
+  --surface-color: #ffffff;
+  --text-color: #0f172a;
+  --text-secondary: #64748b;
+  --border-color: #d1fae5;
+  --shadow-color: rgba(16, 185, 129, 0.15);
+  --gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  --card-gradient: linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%);
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.theme-yellow {
+  --primary-color: #f59e0b;
+  --primary-light: #fbbf24;
+  --primary-dark: #d97706;
+  --secondary-color: #fefce8;
+  --background-color: #fffbeb;
+  --surface-color: #ffffff;
+  --text-color: #0f172a;
+  --text-secondary: #64748b;
+  --border-color: #fed7aa;
+  --shadow-color: rgba(245, 158, 11, 0.2);
+  --gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+  --card-gradient: linear-gradient(135deg, #ffffff 0%, #fefce8 100%);
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.theme-red {
+  --primary-color: #ef4444;
+  --primary-light: #f87171;
+  --primary-dark: #dc2626;
+  --secondary-color: #fef2f2;
+  --background-color: #fef2f2;
+  --surface-color: #ffffff;
+  --text-color: #0f172a;
+  --text-secondary: #64748b;
+  --border-color: #fecaca;
+  --shadow-color: rgba(239, 68, 68, 0.15);
+  --gradient: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+  --card-gradient: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.theme-gold {
+  --primary-color: #f59e0b;
+  --primary-light: #fcd34d;
+  --primary-dark: #d97706;
+  --secondary-color: #fef3c7;
+  --background-color: #fffbeb;
+  --surface-color: #ffffff;
+  --text-color: #0f172a;
+  --text-secondary: #64748b;
+  --border-color: #fcd34d;
+  --shadow-color: rgba(245, 158, 11, 0.25);
+  --gradient: linear-gradient(135deg, #f59e0b 0%, #fcd34d 50%, #fbbf24 100%);
+  --card-gradient: linear-gradient(135deg, #ffffff 0%, #fef3c7 50%, #fef9c3 100%);
+  --gold-shine: linear-gradient(45deg, #f59e0b, #fcd34d, #fbbf24, #f59e0b);
+  --metallic: linear-gradient(135deg, #d97706 0%, #f59e0b 25%, #fcd34d 50%, #f59e0b 75%, #d97706 100%);
+  --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(245, 158, 11, 0.1);
+}
+
+/* 共通スタイル（テーマに応じて色が変わる） */
+.themed-card {
+  background: var(--card-gradient);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 20px 0;
+  box-shadow: var(--card-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(8px);
+}
+
+.themed-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px var(--shadow-color);
+}
+
+.themed-button {
+  background: var(--gradient);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 28px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--card-shadow);
+  letter-spacing: 0.025em;
+}
+
+.themed-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px var(--shadow-color);
+}
+
+.themed-button:active {
+  transform: translateY(0);
+}
+
+.themed-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.themed-input {
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--surface-color);
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.themed-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--shadow-color);
+  transform: translateY(-1px);
+}
+
+.themed-title {
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+  margin-bottom: 24px;
+  font-size: 2rem;
+  letter-spacing: -0.025em;
+}
+
+/* 進捗表示用のスタイル */
+.progress-indicator {
+  background: var(--gradient);
+  border-radius: 24px;
+  padding: 12px 20px;
+  color: white;
+  font-weight: 600;
+  display: inline-block;
+  margin: 16px 0;
+  box-shadow: var(--card-shadow);
+  font-size: 14px;
+  letter-spacing: 0.025em;
+  backdrop-filter: blur(8px);
+}
+
+/* 金ぴかテーマ専用の特別エフェクト */
+.theme-gold .gold-effect {
+  background: var(--metallic);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  animation: goldShine 4s ease-in-out infinite;
+}
+
+.theme-gold .gold-card {
+  background: var(--card-gradient);
+  border: 2px solid var(--border-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-gold .gold-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.2), transparent);
+  animation: goldSweep 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes goldShine {
+  0%, 100% { 
+    filter: brightness(1) contrast(1) saturate(1); 
+    transform: scale(1);
+  }
+  50% { 
+    filter: brightness(1.3) contrast(1.2) saturate(1.3); 
+    transform: scale(1.02);
+  }
+}
+
+@keyframes goldSweep {
+  0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+  50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+  100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+}
+
+/* 折りたたみアニメーション */
+.collapsible-section {
+  transition: all 0.3s ease-in-out;
+  opacity: 1;
+  transform: translateY(0);
+  margin-bottom: 20px;
+}
+
+.collapsible-section.entering {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.collapsible-section.exiting {
+  opacity: 0;
+  transform: translateY(-10px);
+  margin-bottom: 0;
+}
+
+/* コントロールボタンのホバー効果 */
+.control-button {
+  transition: all 0.2s ease;
+  transform: scale(1);
+}
+
+.control-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.control-button:active {
+  transform: scale(0.98);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .app-container {
+    padding: 1rem;
+  }
+  
+  .themed-card {
+    padding: 20px;
+    margin: 16px 0;
+    border-radius: 12px;
+  }
+  
+  .themed-button {
+    padding: 12px 20px;
+    font-size: 13px;
+  }
+  
+  .themed-title {
+    font-size: 1.75rem;
+  }
+  
+  .progress-indicator {
+    font-size: 13px;
+    padding: 10px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-container {
+    padding: 0.5rem;
+  }
+  
+  .themed-card {
+    padding: 16px;
+    margin: 12px 0;
+  }
+  
+  .themed-title {
+    font-size: 1.5rem;
+  }
+}
+
+/* アクセシビリティ対応 */
+@media (prefers-reduced-motion: reduce) {
+  .themed-card,
+  .themed-button,
+  .themed-input,
+  .app-container {
+    transition: none;
+    animation: none;
+  }
+  
+  .theme-gold .gold-effect,
+  .theme-gold .gold-card::before {
+    animation: none;
+  }
+}

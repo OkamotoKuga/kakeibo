@@ -1,0 +1,131 @@
+/* SubscriptionComponent専用スタイル */
+.subscription-card {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.subscription-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.subscription-card.payment-today {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+  }
+}
+
+.subscription-form {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.subscription-status-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.7em;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.subscription-status-active {
+  background-color: #4caf50;
+  color: white;
+}
+
+.subscription-status-inactive {
+  background-color: #999;
+  color: white;
+}
+
+.subscription-status-today {
+  background-color: #f44336;
+  color: white;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.5; }
+}
+
+/* モバイル対応 */
+@media (max-width: 768px) {
+  .subscription-card {
+    padding: 12px;
+  }
+  
+  .subscription-form {
+    padding: 15px;
+  }
+  
+  .subscription-card h4 {
+    font-size: 1em;
+  }
+  
+  .subscription-card button {
+    padding: 4px 8px;
+    font-size: 0.8em;
+  }
+}
+
+/* 今月の予定表示用スタイル */
+.subscription-preview {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.subscription-preview h3 {
+  margin: 0 0 15px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.subscription-item-preview {
+  background: rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.subscription-item-preview:last-child {
+  margin-bottom: 0;
+}
+
+.subscription-total {
+  border-top: 2px solid rgba(255,255,255,0.3);
+  padding-top: 10px;
+  margin-top: 10px;
+  font-weight: bold;
+  text-align: right;
+}

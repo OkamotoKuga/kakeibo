@@ -1,0 +1,51 @@
+CREATE USER IF NOT EXISTS '${SQL_USERNAME}'@'localhost' IDENTIFIED WITH mysql_native_password BY '${SQL_PASSWORD}';
+FLUSH PRIVILEGES;
+
+CREATE DATABASE IF NOT EXISTS db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+GRANT ALL PRIVILEGES ON db.* TO '${SQL_USERNAME}'@'localhost';
+USE db;
+
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS budget (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    income INT NOT NULL,
+    outgo INT NOT NULL,
+    date DATE NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS purchases (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    product_name VARCHAR(255) NOT NULL,
+    price INT NOT NULL,
+    date DATE NOT NULL,
+    category VARCHAR(50) DEFAULT 'その他',
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS income (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    product_name VARCHAR(255) NOT NULL,
+    price INT NOT NULL,
+    date DATE NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    product_name VARCHAR(255) NOT NULL,
+    price INT NOT NULL,
+    day INT NOT NULL,
+    last_updated_at INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
