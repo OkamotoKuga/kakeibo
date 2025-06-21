@@ -8,9 +8,21 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+	"golang.org/x/crypto/bcrypt"
 
 	_ "github.com/go-sql-driver/mysql"
 )
+
+func hashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(bytes), err
+}
+
+
+func checkPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
+}
 
 func AccountRouting(app *fiber.App) {
 	dsn := fmt.Sprintf("%s:%s@tcp(localhost:3306)/db", os.Getenv("SQL_USERNAME"), os.Getenv("SQL_PASSWORD"))
@@ -55,7 +67,7 @@ func AccountRouting(app *fiber.App) {
 			})
 		}
 
-		if dbPassword != password {
+		if !checkPasswordHash(password, dbPassword) {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
 				"message": "Invalid credentials. (認証情報が無効です。)",
@@ -105,11 +117,21 @@ func AccountRouting(app *fiber.App) {
 			log.Println(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error":   "Internal Server Error",
-				"message": "Database connection failed.",
-			})
+				"message": "Database connection failed.",			})
 		}
 		defer db.Close()
-		result, err := db.Exec("INSERT INTO users (name, email, password) VALUES (?, ?, ?)", name, email, password)
+		
+		// パスワードをハッシュ化
+		hashedPassword, err := hashPassword(password)
+		if err != nil {
+			log.Println(err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error":   "Internal Server Error",
+				"message": "Failed to hash password.",
+			})
+		}
+		
+		result, err := db.Exec("INSERT INTO users (name, email, password) VALUES (?, ?, ?)", name, email, hashedPassword)
 		if err != nil {
 			log.Println(err)
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
@@ -141,7 +163,6 @@ func AccountRouting(app *fiber.App) {
 		email := c.FormValue("email")
 		password := c.FormValue("password")
 		newPassword := c.FormValue("newPassword")
-
 		db, err := sql.Open("mysql", dsn)
 		if err != nil {
 			log.Println(err)
@@ -152,7 +173,34 @@ func AccountRouting(app *fiber.App) {
 		}
 		defer db.Close()
 
-		result, err := db.Exec("UPDATE users SET password = ? WHERE email = ? AND password = ?", newPassword, email, password)
+		// 現在のパスワードを確認
+		var currentHashedPassword string
+		err = db.QueryRow("SELECT password FROM users WHERE email = ?", email).Scan(&currentHashedPassword)
+		if err != nil {
+			log.Println(err)
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "User not found.",
+			})
+		}
+	
+		if !checkPasswordHash(password, currentHashedPassword) {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "Invalid current password.",
+			})		}
+		
+		// 新しいパスワードをハッシュ化
+		hashedNewPassword, err := hashPassword(newPassword)
+		if err != nil {
+			log.Println(err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error":   "Internal Server Error",
+				"message": "Failed to hash new password.",
+			})
+		}
+
+		result, err := db.Exec("UPDATE users SET password = ? WHERE email = ?", hashedNewPassword, email)
 		if err != nil {
 			log.Println(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
