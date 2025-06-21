@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import config from './config';
 
 const SubscriptionComponent = ({ onClose, onSubscriptionsUpdated }) => {
   const [subscriptions, setSubscriptions] = useState([]);
@@ -6,23 +7,21 @@ const SubscriptionComponent = ({ onClose, onSubscriptionsUpdated }) => {
     name: '',
     amount: '',
     startDate: '',
-    cycle: 'monthly', // monthly or halfyearly
+    cycle: 'monthly', 
     category: '娯楽',
-    type: '支出' // 支出 or 収入
+    type: '支出' 
   });
   const [error, setError] = useState('');
   const categories = ['娯楽', '通信費', 'ユーティリティ', '教育', 'その他'];
   const incomeCategories = ['給与', '奨学金', '副業', '投資', 'その他'];
   
-  // カテゴリーアイコンマッピング
+
   const getCategoryIcon = (category) => {
     const icons = {
-      // 支出
       '娯楽': '🎮',
       '通信費': '📱',
       'ユーティリティ': '⚡',
       '教育': '📚',
-      // 収入
       '給与': '💼',
       '奨学金': '🎓',
       '副業': '💻',
@@ -32,47 +31,123 @@ const SubscriptionComponent = ({ onClose, onSubscriptionsUpdated }) => {
     return icons[category] || '📋';
   };
 
-  // 周期アイコンマッピング
   const getCycleIcon = (cycle) => {
     return cycle === 'monthly' ? '📅' : '📆';
   };
 
-  // 周期表示名
+
   const getCycleName = (cycle) => {
     return cycle === 'monthly' ? '毎月' : '半年';
   };
 
-  // ローカルストレージからデータを読み込み
   useEffect(() => {
     const savedSubscriptions = localStorage.getItem('kakeibo-subscriptions');
     if (savedSubscriptions) {
-      setSubscriptions(JSON.parse(savedSubscriptions));
+      const subs = JSON.parse(savedSubscriptions);
+      setSubscriptions(subs);
+      
+      checkAndProcessPayments(subs);
     }
   }, []);
 
-  // ローカルストレージにデータを保存
+  const checkAndProcessPayments = async (subs) => {
+    const today = new Date();
+    const token = localStorage.getItem('auth_token');
+    
+    if (!token) return;
+
+    for (const sub of subs) {
+      if (!sub.isActive) continue;
+      
+      const nextPayment = new Date(sub.nextPayment);
+      const isPaymentDay = today.toDateString() === nextPayment.toDateString();
+      
+      if (isPaymentDay) {
+        await processPayment(sub);
+      }
+    }
+  };
+
+  const processPayment = async (subscription) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const today = new Date();
+      
+      const year = today.getFullYear();
+      const month = today.getMonth() + 1;
+      const day = today.getDate();
+      
+      const endpoint = subscription.type === '収入' ? '/data/income' : '/data/purchases';
+      
+      const response = await fetch(`${config.API_BASE}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          product_name: `[定期] ${subscription.name}`,
+          price: Number(subscription.amount),
+          year: year,
+          month: month,
+          day: day,
+          category: subscription.category,
+          type: subscription.type
+        }),
+      });
+
+      if (response.ok) {        console.log(`✅ 定期${subscription.type === '収入' ? '収入' : '支払い'}を自動送信: ${subscription.name}`);
+        
+        // 現在のサブスクリプション一覧を取得
+        const currentSubscriptions = JSON.parse(localStorage.getItem('kakeibo-subscriptions') || '[]');
+        
+        // 次回支払日を更新
+        const updatedSubscriptions = currentSubscriptions.map(sub => {
+          if (sub.id === subscription.id) {
+            return {
+              ...sub,
+              nextPayment: calculateNextPayment(sub.startDate, sub.cycle)
+            };
+          }
+          return sub;
+        });
+        
+        saveSubscriptions(updatedSubscriptions);
+        
+        if (onSubscriptionsUpdated) {
+          onSubscriptionsUpdated();
+        }
+      } else {
+        console.error(`❌ 定期${subscription.type === '収入' ? '収入' : '支払い'}の自動送信に失敗: ${subscription.name}`);
+      }
+    } catch (error) {
+      console.error('定期支払い処理エラー:', error);
+    }
+  };
+
+
   const saveSubscriptions = (subs) => {
     localStorage.setItem('kakeibo-subscriptions', JSON.stringify(subs));
     setSubscriptions(subs);
-    // 親コンポーネントに更新を通知
+
     if (onSubscriptionsUpdated) {
       onSubscriptionsUpdated();
     }
   };
 
-  // 次回支払い日を計算
+
   const calculateNextPayment = (startDate, cycle) => {
     const start = new Date(startDate);
     const today = new Date();
     let nextPayment = new Date(start);
 
     if (cycle === 'monthly') {
-      // 毎月の場合
+   
       while (nextPayment <= today) {
         nextPayment.setMonth(nextPayment.getMonth() + 1);
       }
     } else {
-      // 半年の場合
+   
       while (nextPayment <= today) {
         nextPayment.setMonth(nextPayment.getMonth() + 6);
       }
@@ -81,7 +156,7 @@ const SubscriptionComponent = ({ onClose, onSubscriptionsUpdated }) => {
     return nextPayment;
   };
 
-  // 新しいサブスクリプションを追加
+
   const handleAddSubscription = (e) => {
     e.preventDefault();
     
@@ -95,7 +170,7 @@ const SubscriptionComponent = ({ onClose, onSubscriptionsUpdated }) => {
       return;
     }
 
-    // 同名のサービスがあるかチェック
+
     const existing = subscriptions.find(sub => 
       sub.name.toLowerCase() === newSubscription.name.trim().toLowerCase()
     );
@@ -110,7 +185,7 @@ const SubscriptionComponent = ({ onClose, onSubscriptionsUpdated }) => {
       startDate: newSubscription.startDate,
       cycle: newSubscription.cycle,
       category: newSubscription.category,
-      type: newSubscription.type, // 収入/支出タイプを追加
+      type: newSubscription.type, 
       nextPayment: calculateNextPayment(newSubscription.startDate, newSubscription.cycle),
       isActive: true
     };
@@ -129,8 +204,6 @@ const SubscriptionComponent = ({ onClose, onSubscriptionsUpdated }) => {
     setShowAddForm(false);
     setError('');
   };
-
-  // サブスクリプションを削除
   const handleDeleteSubscription = (id) => {
     if (window.confirm('このサブスクリプションを削除しますか？')) {
       const updatedSubscriptions = subscriptions.filter(sub => sub.id !== id);
@@ -138,7 +211,13 @@ const SubscriptionComponent = ({ onClose, onSubscriptionsUpdated }) => {
     }
   };
 
-  // サブスクリプションの有効/無効を切り替え
+  const handleManualPayment = async (subscription) => {
+    if (window.confirm(`${subscription.name}の${subscription.type === '収入' ? '収入' : '支払い'}を今すぐ実行しますか？`)) {
+      await processPayment(subscription);
+      alert(`✅ ${subscription.name}の${subscription.type === '収入' ? '収入' : '支払い'}を記録しました`);
+    }
+  };
+
   const toggleSubscription = (id) => {
     const updatedSubscriptions = subscriptions.map(sub =>
       sub.id === id ? { ...sub, isActive: !sub.isActive } : sub
@@ -146,14 +225,12 @@ const SubscriptionComponent = ({ onClose, onSubscriptionsUpdated }) => {
     saveSubscriptions(updatedSubscriptions);
   };
 
-  // 今日が支払い日かチェック
   const isPaymentToday = (subscription) => {
     const today = new Date();
     const nextPayment = new Date(subscription.nextPayment);
     return today.toDateString() === nextPayment.toDateString();
   };
 
-  // 支払い日までの日数
   const getDaysUntilPayment = (subscription) => {
     const today = new Date();
     const nextPayment = new Date(subscription.nextPayment);
@@ -214,7 +291,7 @@ const SubscriptionComponent = ({ onClose, onSubscriptionsUpdated }) => {
                 setNewSubscription({
                   ...newSubscription, 
                   type: newType,
-                  category: newType === '収入' ? '給与' : '娯楽' // デフォルトカテゴリを変更
+                  category: newType === '収入' ? '給与' : '娯楽' 
                 });
               }}
               className="themed-input"
@@ -316,8 +393,21 @@ const SubscriptionComponent = ({ onClose, onSubscriptionsUpdated }) => {
                     <h4 style={{ margin: 0 }}>
                       {isIncome ? '💰' : '💳'} {getCategoryIcon(sub.category)} {sub.name}
                       {!sub.isActive && <span style={{ opacity: 0.5 }}> (停止中)</span>}
-                    </h4>
-                    <div style={{ display: 'flex', gap: '10px' }}>
+                    </h4>                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button
+                        onClick={() => handleManualPayment(sub)}
+                        style={{
+                          padding: '5px 10px',
+                          border: 'none',
+                          borderRadius: '5px',
+                          cursor: 'pointer',
+                          backgroundColor: isIncome ? '#4caf50' : '#2196f3',
+                          color: 'white',
+                          fontSize: '0.8em'
+                        }}
+                      >
+                        {isIncome ? '💰 受取' : '💸 支払'}
+                      </button>
                       <button
                         onClick={() => toggleSubscription(sub.id)}
                         style={{
