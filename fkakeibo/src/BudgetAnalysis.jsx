@@ -1,6 +1,28 @@
 import React from "react";
 
 const BudgetAnalysis = ({ budget, records, currentTheme }) => {
+
+  const calculateMonthlySubscriptions = () => {
+    const subscriptions = JSON.parse(localStorage.getItem('kakeibo-subscriptions') || '[]');
+    return subscriptions
+      .filter(sub => sub.isActive)
+      .reduce((total, sub) => {
+        if (sub.cycle === 'monthly') {
+          return total + (sub.type === '支出' ? sub.amount : -sub.amount);
+        } else if (sub.cycle === 'halfyearly') {
+          return total + (sub.type === '支出' ? sub.amount / 6 : -sub.amount / 6);
+        }
+        return total;
+      }, 0);
+  };
+
+  const getEffectiveMonthlyIncome = () => {
+    if (!budget.includeSubscriptions) {
+      return budget.monthlyIncome || 0;
+    }
+    const subscriptionCost = calculateMonthlySubscriptions();
+    return (budget.monthlyIncome || 0) - subscriptionCost;
+  };
   const calculateCurrentBalance = () => {
     if (!records) return budget.initialBalance || budget.balance || 0;
     
@@ -55,11 +77,16 @@ const BudgetAnalysis = ({ budget, records, currentTheme }) => {
           record.type === "収入"
         );
       })
-      .reduce((total, record) => total + record.amount, 0);        const needToSaveTotal = Math.max(0, budget.targetAmount - currentBalance);
+      .reduce((total, record) => total + record.amount, 0);    const needToSaveTotal = Math.max(0, budget.targetAmount - currentBalance);
     const needToSavePerMonth = needToSaveTotal / monthsToTarget;
+    
+
+    const effectiveMonthlyIncome = getEffectiveMonthlyIncome();
+    const subscriptionCost = calculateMonthlySubscriptions();
+    
     const availablePerMonth = Math.max(
       0,
-      budget.monthlyIncome - needToSavePerMonth
+      effectiveMonthlyIncome - needToSavePerMonth
     );
     const availablePerDay = availablePerMonth / 30;
     const remainingThisMonth = availablePerMonth - thisMonthExpenses;
@@ -78,7 +105,9 @@ const BudgetAnalysis = ({ budget, records, currentTheme }) => {
       thisMonthIncome,
       remainingThisMonth,
       remainingDaysInMonth,
-      remainingDailyBudget,
+      remainingDailyBudget,      effectiveMonthlyIncome,
+      subscriptionCost,
+      includeSubscriptions: budget.includeSubscriptions
     };
   };
 
@@ -189,15 +218,42 @@ const BudgetAnalysis = ({ budget, records, currentTheme }) => {
             {formatCurrency(analysis.thisMonthExpenses)}
           </p>
           <small>今月の支出合計</small>
-        </div>
-
-        <div className="analysis-card">
+        </div>        <div className="analysis-card">
           <h4>今月の収入</h4>
           <p className="amount income">
             {formatCurrency(analysis.thisMonthIncome)}
           </p>
           <small>今月の収入合計</small>
-        </div>        <div className="analysis-card">
+        </div>
+
+        {/* サブスクリプション情報カード */}
+        {analysis.includeSubscriptions && (
+          <div className="analysis-card" style={{
+            padding: '20px',
+            borderRadius: '12px',
+            backgroundColor: currentTheme?.secondary || '#f8f9fa',
+            border: `1px solid ${currentTheme?.border || '#e1e1e1'}`,
+            textAlign: 'center',
+            boxShadow: `0 4px 12px ${currentTheme?.shadow || 'rgba(0,0,0,0.1)'}`
+          }}>
+            <h4 style={{ margin: '0 0 10px 0', fontSize: '16px', color: currentTheme?.text || '#333' }}>
+              💳 定期取引 (月額換算)
+            </h4>
+            <p className="amount" style={{ 
+              fontSize: '20px', 
+              fontWeight: 'bold', 
+              margin: '10px 0',
+              color: analysis.subscriptionCost > 0 ? '#dc3545' : '#28a745'
+            }}>
+              {formatCurrency(analysis.subscriptionCost)}
+            </p>
+            <small style={{ color: currentTheme?.textSecondary || '#666' }}>
+              実質月収: {formatCurrency(analysis.effectiveMonthlyIncome)}
+            </small>
+          </div>
+        )}
+
+        <div className="analysis-card">
           <h4>現在の残高</h4>
           <p className="amount" style={{ 
             color: currentBalance >= 0 ? '#28a745' : '#dc3545'
