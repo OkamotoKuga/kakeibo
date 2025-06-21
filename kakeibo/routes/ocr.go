@@ -152,7 +152,7 @@ func ProcessOCR(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": "リクエストの作成に失敗しました"})
 	}
 
-	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=%s", apiKey)
+	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=%s", apiKey)
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Gemini APIへのリクエストに失敗しました"})
