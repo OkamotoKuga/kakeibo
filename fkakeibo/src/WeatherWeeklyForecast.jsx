@@ -224,7 +224,7 @@ const WeatherWeeklyForecast = ({ currentTheme }) => {
         opacity: 0.6,
         color: currentTheme?.textSecondary || '#666'
       }}>
-        データ提供: 気象庁 | 会津若松地方の予報
+        データ元: 気象庁 | 会津若松地方の予報
       </div>
     </div>
   );
