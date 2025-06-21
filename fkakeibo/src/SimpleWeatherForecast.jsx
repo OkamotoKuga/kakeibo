@@ -173,7 +173,7 @@ const SimpleWeatherForecast = ({ currentTheme }) => {
         opacity: 0.6,
         color: currentTheme?.textSecondary || '#666'
       }}>
-        データ提供: 気象庁
+        データ元: 気象庁
       </div>
     </div>
   );
