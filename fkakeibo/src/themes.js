@@ -118,16 +118,57 @@ export const calculateProgress = (budget, records) => {
 
   const today = new Date();
   const targetDate = new Date(budget.targetDate);
-  const totalDays = Math.ceil((targetDate - new Date()) / (1000 * 60 * 60 * 24));
+  const totalDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
   
   if (totalDays <= 0) {
     // 期日を過ぎている場合
-    return budget.balance >= budget.targetAmount ? 100 : 0;
+    const currentBalance = calculateCurrentBalance(budget, records);
+    return currentBalance >= budget.targetAmount ? 100 : 0;
   }
 
+  // 現在の残高を計算（初期残高 + 収入 - 支出）
+  const currentBalance = calculateCurrentBalance(budget, records);
+  
+  // サブスクリプションを考慮した予測残高を計算
+  let adjustedBalance = currentBalance;
+  if (budget.includeSubscriptions && totalDays > 0) {
+    const monthsRemaining = totalDays / 30;
+    const subscriptionCost = calculateMonthlySubscriptions() * monthsRemaining;
+    adjustedBalance = currentBalance - subscriptionCost;
+  }
+  
   // 現在の貯金進捗率を計算
-  const currentSavings = budget.balance;
-  const progressPercentage = (currentSavings / budget.targetAmount) * 100;
+  const progressPercentage = (adjustedBalance / budget.targetAmount) * 100;
   
   return Math.max(0, Math.min(100, progressPercentage));
+};
+
+// サブスクリプションの月額合計を計算
+const calculateMonthlySubscriptions = () => {
+  const subscriptions = JSON.parse(localStorage.getItem('kakeibo-subscriptions') || '[]');
+  return subscriptions
+    .filter(sub => sub.isActive)
+    .reduce((total, sub) => {
+      if (sub.cycle === 'monthly') {
+        return total + (sub.type === '支出' ? sub.amount : -sub.amount);
+      } else if (sub.cycle === 'halfyearly') {
+        return total + (sub.type === '支出' ? sub.amount / 6 : -sub.amount / 6);
+      }
+      return total;
+    }, 0);
+};
+
+// 現在の残高を計算するヘルパー関数
+const calculateCurrentBalance = (budget, records) => {
+  const initialBalance = budget.initialBalance || budget.balance || 0;
+  
+  const totalIncome = records
+    .filter(record => record.type === '収入')
+    .reduce((sum, record) => sum + (record.price || record.amount || 0), 0);
+  
+  const totalExpense = records
+    .filter(record => record.type === '支出')
+    .reduce((sum, record) => sum + (record.price || record.amount || 0), 0);
+  
+  return initialBalance + totalIncome - totalExpense;
 };
