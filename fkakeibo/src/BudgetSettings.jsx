@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 
-const BudgetSettings = ({ budget, onBudgetChange, currentTheme, records }) => {
-  const [localBudget, setLocalBudget] = useState({
-    initialBalance: 0,     targetAmount: 0,
+const BudgetSettings = ({ budget, onBudgetChange, currentTheme, records }) => {  const [localBudget, setLocalBudget] = useState({
+    initialBalance: 0,
+    targetAmount: 0,
     targetDate: "",
     monthlyIncome: 0,
+    includeSubscriptions: true,  
     ...budget,
   });
 
@@ -16,8 +17,7 @@ const BudgetSettings = ({ budget, onBudgetChange, currentTheme, records }) => {
     const newBudget = { ...localBudget, [field]: value };
     setLocalBudget(newBudget);
     onBudgetChange(newBudget);
-  };
-  const calculateCurrentBalance = () => {
+  };  const calculateCurrentBalance = () => {
     if (!records) return localBudget.initialBalance || 0;
     
     const totalIncome = records
@@ -29,6 +29,29 @@ const BudgetSettings = ({ budget, onBudgetChange, currentTheme, records }) => {
       .reduce((total, record) => total + record.amount, 0);
     
     return (localBudget.initialBalance || 0) + totalIncome - totalExpenses;
+  };
+
+  const calculateMonthlySubscriptions = () => {
+    const subscriptions = JSON.parse(localStorage.getItem('kakeibo-subscriptions') || '[]');
+    return subscriptions
+      .filter(sub => sub.isActive)
+      .reduce((total, sub) => {
+        if (sub.cycle === 'monthly') {
+          return total + (sub.type === '支出' ? sub.amount : -sub.amount);
+        } else if (sub.cycle === 'halfyearly') {
+          return total + (sub.type === '支出' ? sub.amount / 6 : -sub.amount / 6);
+        }
+        return total;
+      }, 0);
+  };
+
+
+  const getEffectiveMonthlyIncome = () => {
+    if (!localBudget.includeSubscriptions) {
+      return localBudget.monthlyIncome || 0;
+    }
+    const subscriptionCost = calculateMonthlySubscriptions();
+    return (localBudget.monthlyIncome || 0) - subscriptionCost;
   };
 
   const currentBalance = calculateCurrentBalance();
@@ -120,9 +143,7 @@ const BudgetSettings = ({ budget, onBudgetChange, currentTheme, records }) => {
               backgroundColor: currentTheme?.surface || '#fff'
             }}
           />
-        </div>
-
-        <div className="form-group">
+        </div>        <div className="form-group">
           <label style={{ color: currentTheme?.textSecondary || '#666', marginBottom: '5px', display: 'block' }}>月収 (円)</label>
           <input
             type="number"
@@ -138,6 +159,35 @@ const BudgetSettings = ({ budget, onBudgetChange, currentTheme, records }) => {
               backgroundColor: currentTheme?.surface || '#fff'
             }}
           />
+        </div>
+
+        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+          <label style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            color: currentTheme?.textSecondary || '#666',
+            fontSize: '14px',
+            cursor: 'pointer'
+          }}>
+            <input
+              type="checkbox"
+              checked={localBudget.includeSubscriptions}
+              onChange={(e) => handleChange("includeSubscriptions", e.target.checked)}
+              style={{ marginRight: '8px' }}
+            />
+            💳 定期取引（サブスクリプション）を予算計算に含める
+          </label>
+          <small style={{ 
+            color: currentTheme?.textSecondary || '#888', 
+            marginLeft: '20px',
+            display: 'block',
+            marginTop: '5px'
+          }}>
+            {localBudget.includeSubscriptions ? 
+              `月額サブスク費用: ${formatCurrency(calculateMonthlySubscriptions())} (実質月収: ${formatCurrency(getEffectiveMonthlyIncome())})` :
+              '定期取引は予算計算に含まれません'
+            }
+          </small>
         </div>
       </div>
     </div>
